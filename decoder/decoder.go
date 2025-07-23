@@ -56,3 +56,26 @@ func decodeInt(data []byte, pos int) (types.BencodeInt, int, error) {
 	}
 	return types.BencodeInt(num), pos + 1, nil
 }
+
+func decodeString(data []byte, pos int) (types.Bencodestring, int, error) {
+	start := pos
+	for pos <= len(data) && data[pos] != ':' {
+		if data[pos] < '0' || data[pos] > '9' {
+			return "", pos, utils.NewBencodeError("Invalid lenght in string at position : %d", pos)
+		}
+		pos++
+	}
+	if pos >= len(data) || data[pos] != ':' {
+		return "", pos, utils.NewBencodeError("unterminated string lenght at pos %d", pos)
+	}
+	lenghtStr := string(data[start:pos])
+	length, err := strconv.Atoi(lenghtStr)
+	if err != nil {
+		return "", pos, utils.NewBencodeError("invalid string length %v", err)
+	}
+	pos++
+	if pos+length > len(data) {
+		return "", pos, utils.NewBencodeError("string length exceeds data at position %d", pos)
+	}
+	return types.Bencodestring(data[pos : pos+length]), pos + length, nil
+}
